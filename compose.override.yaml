@@ -1,0 +1,46 @@
+services:
+  outline:
+    image: outlinewiki/outline:1.13.0
+    networks:
+      - default
+      - traefik
+    environment:
+      PGSSLMODE: disable
+    labels:
+      traefik.enable: true
+      traefik.http.routers.outline.rule: Host(`outline.lab.localhost`)
+      traefik.http.routers.outline.entrypoints: websecure
+      traefik.http.routers.outline.service: outline
+      traefik.http.services.outline.loadbalancer.server.port: 3000
+      traefik.http.services.outline.loadbalancer.server.scheme: http
+
+  redis:
+    command: ["redis-server"]
+
+  https-portal:
+    profiles:
+      - 00000000-0000-0000-0000-000000000000
+
+  buggregator:
+    image: ghcr.io/buggregator/server:latest
+    volumes:
+      - ./buggregator:/buggregator:rw
+    networks:
+      - default
+      - traefik
+    expose:
+      - 1025
+      - 8000
+    command: ["-db", "/buggregator/buggregator.db"]
+    labels:
+      traefik.enable: true
+      traefik.http.routers.buggregator.rule: Host(`buggregator.lab.localhost`)
+      traefik.http.routers.buggregator.entrypoints: websecure
+      traefik.http.routers.buggregator.service: buggregator
+      traefik.http.services.buggregator.loadbalancer.server.port: 8000
+      traefik.http.services.buggregator.loadbalancer.server.scheme: http
+
+networks:
+  traefik:
+    name: traefik
+    external: true
